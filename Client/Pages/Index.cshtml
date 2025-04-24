@@ -1,0 +1,65 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Real-Time Chat";
+}
+
+<div class="chat-container" style="max-width:600px;margin:2rem auto;">
+    <h2>@ViewData["Title"]</h2>
+
+    <!-- Chat messages will go here -->
+    <div id="chat"
+         style="border:1px solid #ccc; padding:1rem; height:300px; overflow-y:auto; margin-bottom:1rem;">
+    </div>
+
+    <!-- Input + Send button -->
+    <div style="display:flex;">
+        <input type="text" id="messageText"
+               placeholder="Type your message…"
+               style="flex:1; padding:.5rem; font-size:1rem;" />
+        <button id="submitButton"
+                style="padding:.5rem 1rem; margin-left:.5rem; font-size:1rem;">
+            Send
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- expose the current user’s name to your JS -->
+    <script>
+        // If you have a UserName property on your PageModel, use:
+        
+        // Or, if you’re using ASP.NET Identity:
+         const userName = '@User.Identity.Name';
+    </script>
+
+    <!-- your chat logic, including Message class, sendMessage(), addMessageToChat(), etc. -->
+    <script src="~/js/chat.js"></script>
+
+    <!-- (optional) bootstrap your SignalR connection here, for example: -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script>
+        // Example of connecting to the hub and wiring up addMessageToChat:
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        connection.on("ReceiveMessage", msg => {
+            addMessageToChat(msg);
+        });
+
+        connection.start().catch(err => console.error(err.toString()));
+
+        function sendMessageToHub(message) {
+            connection.invoke("SendMessage", message)
+                .catch(err => console.error(err.toString()));
+        }
+
+        // tie your UI events into clearInputField/sendMessage
+        document.getElementById('submitButton').addEventListener('click', () => {
+            clearInputField();
+            sendMessage();
+        });
+    </script>
+}
